@@ -1,0 +1,73 @@
+apply plugin: 'com.android.application'
+
+
+dependencies {
+    compile 'com.google.android.gms:play-services:3.2.25'
+    compile 'com.actionbarsherlock:actionbarsherlock:4.4.0@aar'
+    compile 'com.google.maps.android:android-maps-utils:0.2.1'
+    compile 'org.bouncycastle:bcprov-jdk16:1.45'
+    compile 'com.android.support:support-v4:19.1.0'
+    compile 'org.codehaus.jackson:jackson-mapper-asl:1.9.12'
+    compile 'com.fasterxml.jackson.core:jackson-core:2.2.+'
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.2.+'
+    compile 'com.google.guava:guava:18.0'
+    compile 'commons-io:commons-io:2.4'
+    compile 'com.squareup.okhttp:okhttp:2.4.0'
+}
+
+android {
+    compileSdkVersion 19
+    buildToolsVersion '19.1.0'
+
+    defaultConfig {
+        minSdkVersion 14
+        targetSdkVersion 19
+    }
+
+    packagingOptions {
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/plexus/components.xml'
+        exclude 'META-INF/ASL2.0'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/NOTICE'
+
+    }
+
+
+    if (project.hasProperty("secure.properties")
+            && new File(project.property("secure.properties")).exists()) {
+
+        Properties props = new Properties()
+        props.load(new FileInputStream(file(project.property("secure.properties"))))
+
+        signingConfigs {
+            debug { 
+                storeFile file("/Users/your_username/.android/debug.keystore")
+            }
+        }
+    } else {
+    
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFile 'proguard.cfg'
+            signingConfig signingConfigs.release
+        }
+    }
+}
+
+task askForPasswords << {
+    // Must create String because System.readPassword() returns char[]
+    // (and assigning that below fails silently)
+
+    android.signingConfigs.release.storePassword = "android"
+    android.signingConfigs.release.keyPassword = "android"
+}
+
+tasks.whenTaskAdded { theTask ->
+    if (theTask.name.equals("packageRelease")) {
+        theTask.dependsOn "askForPasswords"
+    }
+}
